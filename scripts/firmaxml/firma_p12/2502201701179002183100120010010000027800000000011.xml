@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<factura id="comprobante" version="1.0.0">
+<infoTributaria>
+<ambiente>2</ambiente>
+<tipoEmision>1</tipoEmision>
+<razonSocial>RECYCOB S.A.</razonSocial>
+<nombreComercial>RECYCOB S.A.</nombreComercial>
+<ruc>1790021831001</ruc>
+<claveAcceso>2502201701179002183100120010010000027800000000011</claveAcceso>
+<codDoc>01</codDoc>
+<estab>001</estab>
+<ptoEmi>001</ptoEmi>
+<secuencial>000002780</secuencial>
+<dirMatriz>AV.AMAZONAS N19-23 Y AV.PATRIA.EDIFICIO COFIEC PISO 12</dirMatriz>
+</infoTributaria>
+<infoFactura>
+<fechaEmision>25/02/2017</fechaEmision>
+<dirEstablecimiento></dirEstablecimiento>
+<contribuyenteEspecial></contribuyenteEspecial>
+<obligadoContabilidad>SI</obligadoContabilidad>
+<tipoIdentificacionComprador>05</tipoIdentificacionComprador>
+<razonSocialComprador>ORDONEZ BUSTOS SEGUNDO CENEN</razonSocialComprador>
+<identificacionComprador>0802655712</identificacionComprador>
+<totalSinImpuestos>160.39</totalSinImpuestos>
+<totalDescuento>0.00</totalDescuento>
+<totalConImpuestos>
+<totalImpuesto>
+<codigo>2</codigo>
+<codigoPorcentaje>3</codigoPorcentaje>
+<baseImponible>160.39</baseImponible>
+<tarifa>14</tarifa>
+<valor>21.44</valor>
+</totalImpuesto>
+</totalConImpuestos>
+<propina>0.00</propina>
+<importeTotal>181.83</importeTotal>
+<moneda>DOLAR</moneda>
+<pagos>
+<pago>
+<formaPago>01</formaPago>
+<total>181.83</total>
+<plazo>0</plazo>
+<unidadTiempo>MESES</unidadTiempo>
+</pago>
+</pagos>
+</infoFactura>
+<detalles>
+<detalle>
+<codigoPrincipal>00000220</codigoPrincipal>
+<descripcion>FACTURA POR SERVICIOS AUXILIARES DE  GESTION DE COBRANZA  CACEN</descripcion>
+<cantidad>1</cantidad>
+<precioUnitario>153.14</precioUnitario>
+<descuento>0.00</descuento>
+<precioTotalSinImpuesto>153.14</precioTotalSinImpuesto>
+<impuestos>
+<impuesto>
+<codigo>2</codigo>
+<codigoPorcentaje>3</codigoPorcentaje>
+<tarifa>14</tarifa>
+<baseImponible>153.14</baseImponible>
+<valor>21.44</valor>
+</impuesto>
+</impuestos>
+</detalle>
+<detalle>
+<codigoPrincipal>00000223</codigoPrincipal>
+<descripcion>COSTOS JUDICIALES CACEN</descripcion>
+<cantidad>1</cantidad>
+<precioUnitario>7.25</precioUnitario>
+<descuento>0.00</descuento>
+<precioTotalSinImpuesto>7.25</precioTotalSinImpuesto>
+<impuestos>
+<impuesto>
+<codigo>2</codigo>
+<codigoPorcentaje>3</codigoPorcentaje>
+<tarifa>14</tarifa>
+<baseImponible>7.25</baseImponible>
+<valor>0.00</valor>
+</impuesto>
+</impuestos>
+</detalle>
+</detalles>
+<infoAdicional>
+<campoAdicional nombre="DIRECCION">ESMER CALLE ELCARMEN BARRIO ESMERALDAS</campoAdicional>
+<campoAdicional nombre="TELEFONO">062780425</campoAdicional>
+<campoAdicional nombre="MAIL">frogel_cacen@recycob.fin.ec</campoAdicional>
+</infoAdicional>
+</factura>

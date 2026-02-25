@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?><factura id="comprobante" version="1.0.0">
+<infoTributaria>
+<ambiente>2</ambiente>
+<tipoEmision>1</tipoEmision>
+<razonSocial>RECYCOB S.A.</razonSocial>
+<nombreComercial>RECYCOB S.A.</nombreComercial>
+<ruc>1790021831001</ruc>
+<claveAcceso>2502201701179002183100120010010000027800000000011</claveAcceso>
+<codDoc>01</codDoc>
+<estab>001</estab>
+<ptoEmi>001</ptoEmi>
+<secuencial>000002780</secuencial>
+<dirMatriz>AV.AMAZONAS N19-23 Y AV.PATRIA.EDIFICIO COFIEC PISO 12</dirMatriz>
+</infoTributaria>
+<infoFactura>
+<fechaEmision>25/02/2017</fechaEmision>
+<dirEstablecimiento/>
+<contribuyenteEspecial/>
+<obligadoContabilidad>SI</obligadoContabilidad>
+<tipoIdentificacionComprador>05</tipoIdentificacionComprador>
+<razonSocialComprador>ORDONEZ BUSTOS SEGUNDO CENEN</razonSocialComprador>
+<identificacionComprador>0802655712</identificacionComprador>
+<totalSinImpuestos>160.39</totalSinImpuestos>
+<totalDescuento>0.00</totalDescuento>
+<totalConImpuestos>
+<totalImpuesto>
+<codigo>2</codigo>
+<codigoPorcentaje>3</codigoPorcentaje>
+<baseImponible>160.39</baseImponible>
+<tarifa>14</tarifa>
+<valor>21.44</valor>
+</totalImpuesto>
+</totalConImpuestos>
+<propina>0.00</propina>
+<importeTotal>181.83</importeTotal>
+<moneda>DOLAR</moneda>
+<pagos>
+<pago>
+<formaPago>01</formaPago>
+<total>181.83</total>
+<plazo>0</plazo>
+<unidadTiempo>MESES</unidadTiempo>
+</pago>
+</pagos>
+</infoFactura>
+<detalles>
+<detalle>
+<codigoPrincipal>00000220</codigoPrincipal>
+<descripcion>FACTURA POR SERVICIOS AUXILIARES DE  GESTION DE COBRANZA  CACEN</descripcion>
+<cantidad>1</cantidad>
+<precioUnitario>153.14</precioUnitario>
+<descuento>0.00</descuento>
+<precioTotalSinImpuesto>153.14</precioTotalSinImpuesto>
+<impuestos>
+<impuesto>
+<codigo>2</codigo>
+<codigoPorcentaje>3</codigoPorcentaje>
+<tarifa>14</tarifa>
+<baseImponible>153.14</baseImponible>
+<valor>21.44</valor>
+</impuesto>
+</impuestos>
+</detalle>
+<detalle>
+<codigoPrincipal>00000223</codigoPrincipal>
+<descripcion>COSTOS JUDICIALES CACEN</descripcion>
+<cantidad>1</cantidad>
+<precioUnitario>7.25</precioUnitario>
+<descuento>0.00</descuento>
+<precioTotalSinImpuesto>7.25</precioTotalSinImpuesto>
+<impuestos>
+<impuesto>
+<codigo>2</codigo>
+<codigoPorcentaje>3</codigoPorcentaje>
+<tarifa>14</tarifa>
+<baseImponible>7.25</baseImponible>
+<valor>0.00</valor>
+</impuesto>
+</impuestos>
+</detalle>
+</detalles>
+<infoAdicional>
+<campoAdicional nombre="DIRECCION">ESMER CALLE ELCARMEN BARRIO ESMERALDAS</campoAdicional>
+<campoAdicional nombre="TELEFONO">062780425</campoAdicional>
+<campoAdicional nombre="MAIL">frogel_cacen@recycob.fin.ec</campoAdicional>
+</infoAdicional>
+<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:etsi="http://uri.etsi.org/01903/v1.3.2#" Id="Signature679581">
+<ds:SignedInfo Id="Signature-SignedInfo262880">
+<ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
+<ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+<ds:Reference Id="SignedPropertiesID880884" Type="http://uri.etsi.org/01903#SignedProperties" URI="#Signature679581-SignedProperties25992">
+<ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+<ds:DigestValue>Pd5raF9VxlIlSuJ/NGhp/cFBK2g=</ds:DigestValue>
+</ds:Reference>
+<ds:Reference URI="#Certificate1727847">
+<ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+<ds:DigestValue>a1j1Lmp8sBDyM93apyQQENJImB4=</ds:DigestValue>
+</ds:Reference>
+<ds:Reference Id="Reference-ID-298083" URI="#comprobante">
+<ds:Transforms>
+<ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+</ds:Transforms>
+<ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+<ds:DigestValue>bCcObF1uBRt4LCfiIq3sbOsv3ys=</ds:DigestValue>
+</ds:Reference>
+</ds:SignedInfo>
+<ds:SignatureValue Id="SignatureValue147426">
+WOiB20hJq2q5PveveGVztQXQhxNdjHoPl0lOuOBLnYOF8B/EW1eUcWJVWs47VjlNDE8vYRzqxA4V
+k5BzYR+mhOIV8kzwO4Ykq7WOSeR+L5XXoVXHbDb/zVujo7fAIFbb8KsedqW5+TqYcqBEyMYaBmyr
+M/CDMZiGQkriPn64+eF7zimDW/WMOyNrbMBTheHdM3ypogbFIco3m+TBallpeI3zZifLatBZI4EY
+p94mn1LkGs6PMfGBP+AJPWHbmeg7ocYQYnUkqNnQvDfJi4DLguzQ9bZJznP0xq+ykTeYnWlklN/O
+7AU9RXZtxgUt/EDbdhiIsAiUsqd+6GdJUHbyxA==
+</ds:SignatureValue>
+<ds:KeyInfo Id="Certificate1727847">
+<ds:X509Data>
+<ds:X509Certificate>
+MIIJmTCCCIGgAwIBAgIEVM6qizANBgkqhkiG9w0BAQsFADCBkzELMAkGA1UEBhMCRUMxGzAZBgNV
+BAoTElNFQ1VSSVRZIERBVEEgUy5BLjEwMC4GA1UECxMnRU5USURBRCBERSBDRVJUSUZJQ0FDSU9O
+IERFIElORk9STUFDSU9OMTUwMwYDVQQDEyxBVVRPUklEQUQgREUgQ0VSVElGSUNBQ0lPTiBTVUIg
+U0VDVVJJVFkgREFUQTAeFw0xNjExMjExNzE5MDdaFw0xODExMjExNzQ5MDdaMIGXMQswCQYDVQQG
+EwJFQzEbMBkGA1UEChMSU0VDVVJJVFkgREFUQSBTLkEuMTAwLgYDVQQLEydFTlRJREFEIERFIENF
+UlRJRklDQUNJT04gREUgSU5GT1JNQUNJT04xOTATBgNVBAUTDDE2MTExNjA5MzY1MDAiBgNVBAMT
+G0dFQU5JTkEgU1VMQVkgRElBWiBNQVJUSUxMTzCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC
+ggEBANGw0yX5qnA3xCXSIyPgKEnmej9Yk/BS38QZ67YHN1injN+0FnDThZ39RnQeUJxzI79D4UHu
++Z14a9wXj9aprsZdCLvEFT1VjbIF1TZ6ATGiMRMmQIFaTNM9kK/smhXF8WVEqBl0L3NLGNAsi0iD
+AUKwWMyS0SXePR3jWgJ0bvD45RBSANzEoHIC2F0CaXY+Qh9sb1xfpQCxP7SbcC7MkqqbLrL2l8t1
+1gQcFJD88fM1gePnxsRC4wsVrbzjM+lszJ8nWPK2utzomzTPQc3NnRhRr6Sy9/Wu38jWCs2B0tIo
+1O5YezdcJDX9EDptZr6EjYg4k127Lj1lnZcoCQmMDw8CAwEAAaOCBe0wggXpMAsGA1UdDwQEAwIF
+4DBZBggrBgEFBQcBAQRNMEswSQYIKwYBBQUHMAGGPWh0dHA6Ly9vY3NwZ3cuc2VjdXJpdHlkYXRh
+Lm5ldC5lYy9lamJjYS9wdWJsaWN3ZWIvc3RhdHVzL29jc3AwgcoGA1UdIASBwjCBvzA/BgorBgEE
+AYKmcgIKMDEwLwYIKwYBBQUHAgIwIxohQ2VydGlmaWNhZG8gZGUgTWllbWJybyBkZSBFbXByZXNh
+MHwGCisGAQQBgqZyAgQwbjBsBggrBgEFBQcCARZgaHR0cHM6Ly93d3cuc2VjdXJpdHlkYXRhLm5l
+dC5lYy9sZXllc19ub3JtYXRpdmFzL1BvbGl0aWNhcyBkZSBDZXJ0aWZpY2FkbyBNaWVtYnJvIGRl
+IEVtcHJlc2EucGRmMB0GCisGAQQBgqZyAwoEDxMNTUVESUxJTksgUy5BLjAdBgorBgEEAYKmcgML
+BA8TDTA5OTI2NjkzNzMwMDEwGgYKKwYBBAGCpnIDAQQMEwowOTMwMzM1MjI5MB0GCisGAQQBgqZy
+AwIEDxMNR0VBTklOQSBTVUxBWTAUBgorBgEEAYKmcgMDBAYTBERJQVowGAYKKwYBBAGCpnIDBAQK
+EwhNQVJUSUxMTzAUBgorBgEEAYKmcgMFBAYTBENBSkEwMQYKKwYBBAGCpnIDBwQjEyE2IERFIE1B
+UlpPIDM0MDIgWSBDQU1JTE8gREVTVFJVR0UwGwYKKwYBBAGCpnIDCAQNEws1OTM0MjQ0ODcwMDAZ
+BgorBgEEAYKmcgMJBAsTCUdVQVlBUVVJTDAXBgorBgEEAYKmcgMMBAkTB0VDVUFET1IwHwYKKwYB
+BAGCpnIDIAQREw8wMDEwMDIwMDAwMDkyNjAwEwYKKwYBBAGCpnIDIQQFEwNQRlgwKQYDVR0RBCIw
+IIEeY29udmVuaW9zbm9ydGVAbWVkaWxpbmsuY29tLmVjMIICeQYDVR0fBIICcDCCAmwwggJooIIC
+ZKCCAmCGPWh0dHA6Ly9vY3NwZ3cuc2VjdXJpdHlkYXRhLm5ldC5lYy9lamJjYS9wdWJsaWN3ZWIv
+c3RhdHVzL29jc3CGgdRsZGFwOi8vZGlyZWN0LnNlY3VyaXR5ZGF0YS5uZXQuZWMvY249Q1JMOTgs
+Y249QVVUT1JJREFEJTIwREUlMjBDRVJUSUZJQ0FDSU9OJTIwU1VCJTIwU0VDVVJJVFklMjBEQVRB
+LG91PUVOVElEQUQlMjBERSUyMENFUlRJRklDQUNJT04lMjBERSUyMElORk9STUFDSU9OLG89U0VD
+VVJJVFklMjBEQVRBJTIwUy5BLixjPUVDP2NlcnRpZmljYXRlUmV2b2NhdGlvbkxpc3Q/YmFzZYaB
+nmh0dHBzOi8vZGlyZWN0LnNlY3VyaXR5ZGF0YS5uZXQuZWMvfmNybC9hdXRvcmlkYWRfZGVfY2Vy
+dGlmaWNhY2lvbl9zdWJfc2VjdXJpdHlfZGF0YV9lbnRpZGFkX2RlX2NlcnRpZmljYWNpb25fZGVf
+aW5mb3JtYWNpb25fY3VyaXR5X2RhdGFfcy5hLl9jX2VjX2NybGZpbGUuY3JspIGmMIGjMQswCQYD
+VQQGEwJFQzEbMBkGA1UEChMSU0VDVVJJVFkgREFUQSBTLkEuMTAwLgYDVQQLEydFTlRJREFEIERF
+IENFUlRJRklDQUNJT04gREUgSU5GT1JNQUNJT04xNTAzBgNVBAMTLEFVVE9SSURBRCBERSBDRVJU
+SUZJQ0FDSU9OIFNVQiBTRUNVUklUWSBEQVRBMQ4wDAYDVQQDEwVDUkw5ODArBgNVHRAEJDAigA8y
+MDE2MTEyMTE3MTkwN1qBDzIwMTgxMTIxMTc0OTA3WjAfBgNVHSMEGDAWgBT3L0zgdedio3iWWwa2
+LnE7zGw/kDAdBgNVHQ4EFgQUVLdjrfHjWK/ZT9J8+scV12zl9W0wCQYDVR0TBAIwADAZBgkqhkiG
+9n0HQQAEDDAKGwRWOC4xAwIDqDANBgkqhkiG9w0BAQsFAAOCAQEAGSlPVx84vEXP1u4Jt+pqX8T9
+vPbARnw/yRopH+WZ5iWskmL/JZTOgLYk9flEpuW1zbGrMgMs61RcpVy4xQFF3a+EZAyEoL3TDemB
++gF8ni3/udQgz2vn+8IPcYzw8dIfm8/hl0FU3mDQz9li34U1lBnrVVmJFrIingSUdHxtxUWb/pXK
+/oDA6SpZcoYCW0sudLN3qBTe1SVtEkS5yB3YNGsaMV2i0bPb+DD3gq2fLNfExDkKc9XmUT/e9RGE
+1NWXxZHsPmF9p+cvmLrZq13nNoWidC11DakyDuZsgIGMx7cHgnkpiQ4E86GVsQx39Gn/AQeVde0p
+0bOAtRXE8nF/cw==
+</ds:X509Certificate>
+</ds:X509Data>
+<ds:KeyValue>
+<ds:RSAKeyValue>
+<ds:Modulus>
+0bDTJfmqcDfEJdIjI+AoSeZ6P1iT8FLfxBnrtgc3WKeM37QWcNOFnf1GdB5QnHMjv0PhQe75nXhr
+3BeP1qmuxl0Iu8QVPVWNsgXVNnoBMaIxEyZAgVpM0z2Qr+yaFcXxZUSoGXQvc0sY0CyLSIMBQrBY
+zJLRJd49HeNaAnRu8PjlEFIA3MSgcgLYXQJpdj5CH2xvXF+lALE/tJtwLsySqpsusvaXy3XWBBwU
+kPzx8zWB4+fGxELjCxWtvOMz6WzMnydY8ra63OibNM9Bzc2dGFGvpLL39a7fyNYKzYHS0ijU7lh7
+N1wkNf0QOm1mvoSNiDiTXbsuPWWdlygJCYwPDw==
+</ds:Modulus>
+<ds:Exponent>AQAB</ds:Exponent>
+</ds:RSAKeyValue>
+</ds:KeyValue>
+</ds:KeyInfo>
+<ds:Object Id="Signature679581-Object336230"><etsi:QualifyingProperties Target="#Signature679581"><etsi:SignedProperties Id="Signature679581-SignedProperties25992"><etsi:SignedSignatureProperties><etsi:SigningTime>2018-05-30T12:25:15-05:00</etsi:SigningTime><etsi:SigningCertificate><etsi:Cert><etsi:CertDigest><ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/><ds:DigestValue>hxwtkNIEnKelrQntUSm0zdRV4oI=</ds:DigestValue></etsi:CertDigest><etsi:IssuerSerial><ds:X509IssuerName>CN=AUTORIDAD DE CERTIFICACION SUB SECURITY DATA,OU=ENTIDAD DE CERTIFICACION DE INFORMACION,O=SECURITY DATA S.A.,C=EC</ds:X509IssuerName><ds:X509SerialNumber>1422830219</ds:X509SerialNumber></etsi:IssuerSerial></etsi:Cert></etsi:SigningCertificate></etsi:SignedSignatureProperties><etsi:SignedDataObjectProperties><etsi:DataObjectFormat ObjectReference="#Reference-ID-298083"><etsi:Description>contenido comprobante</etsi:Description><etsi:MimeType>text/xml</etsi:MimeType></etsi:DataObjectFormat></etsi:SignedDataObjectProperties></etsi:SignedProperties></etsi:QualifyingProperties></ds:Object></ds:Signature></factura>

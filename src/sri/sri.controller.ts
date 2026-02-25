@@ -1,5 +1,5 @@
 // sri.controller.ts
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Get, Param } from '@nestjs/common';
 import { SriService, RespuestaSri } from './sri.service';
 import { FirmarEnviarDto } from './dto/firmar-enviar.dto';
 
@@ -11,8 +11,16 @@ export class SriController {
 	@Post('enviar')
 	@HttpCode(HttpStatus.OK)
 	async enviarComprobante(@Body() dto: FirmarEnviarDto) {
-		console.log('Body recibido:', JSON.stringify(dto));  // <-- verifica qué llega
-		console.log('XML recibido:', dto.xml);
 		return this.sriService.procesarComprobante(dto.xml);
+	}
+
+	@Get('consultar/:clave')
+	async consultarClave(@Param('clave') clave: string) {
+		return this.sriService.consultarClaveDirecta(clave);
+	}
+
+	@Post('diagnostico')
+	async diagnostico(@Body() dto: { xmlFirmado: string }) {
+		return this.sriService.diagnosticarFirma(dto.xmlFirmado);
 	}
 }

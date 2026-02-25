@@ -1,0 +1,109 @@
+<?php
+$lista = $argv[1];
+function is_valid_domain_name($domain_name)
+{
+    return (preg_match("/^([a-z\d](-*[a-z\d])*)(\.([a-z\d](-*[a-z\d])*))*$/i", $domain_name) //valid chars check
+            && preg_match("/^.{1,253}$/", $domain_name) //overall length check
+            && preg_match("/^[^\.]{1,63}(\.[^\.]{1,63})*$/", $domain_name)   ); //length of each label
+}
+
+
+ function callme($stream, &$buffer, $buflen, &$errmsg)
+  {
+    $buffer = fgets($stream);
+
+    echo $buffer;
+
+    // convertir a minusculas y reemplazar el delimitador "," con [TAB]
+    $buffer = strtolower(str_replace(",", "\t", $buffer));
+
+    return strlen($buffer);
+  }
+
+$list = array(
+"adv",
+"isp",
+"fortunetelling",
+"anonvpn",
+"hacking",
+"spyware",
+"redirector",
+"warez",
+"porn",
+"violence",
+"drugs",
+"alcohol",
+"proxy",
+"gambling"); 
+
+$db = mysqli_init();
+$db->real_connect("127.0.0.1","root","disisot4567","websegura");
+
+foreach ($list as $value) {
+    echo "$value ok
+";
+
+$check_sql = "SELECT idecat FROM db_categoria WHERE categoria  = '".$value."'";
+$res = $db->query($check_sql);
+
+while ($row = $res->fetch_array()){
+$categoria[$value] = $row[0];
+// echo "idecat ".$categoria['idecat']." ok
+// ";
+}
+echo "idecat ".$categoria[$value]." ok
+ ";
+
+$res->close();
+
+$fw = fopen("/tmp/".$value,'w');
+$handle = @fopen("/root/blacklist/".$lista."/".$value."/domains", "r");
+if ($handle) {
+while (($buffer = fgets($handle, 4096)) !== false) {
+$error = 0;
+$pos = strrpos($buffer, '.');
+if($pos===false) {
+$error = 1;
+} 
+
+$pos = strrpos($buffer, ".\n");
+if($pos!==false){
+$error = 1;
+} 
+
+$pos = substr($buffer,0,1);
+if($pos=='.'){
+echo "$buffer
+";
+$error = 1;
+}
+
+if ($error == 0) {
+
+if (is_valid_domain_name($buffer)){
+fwrite($fw,trim($buffer)."\t".$categoria[$value]."\t1\r\n");
+} else {
+echo "dominio no valido ".$buffer."\n";
+}
+}
+}
+
+}
+    if (!feof($handle)) {
+        echo "Error: unexpected fgets() fail\n";
+    }
+    fclose($handle); 
+
+// $db->set_local_infile_handler("callme");
+// $db->query("LOAD DATA LOCAL INFILE '//tmp//".$value."' INTO TABLE db_lista_negra");
+
+if (!$db->query("LOAD DATA LOCAL INFILE '/tmp/".$value."' IGNORE INTO TABLE db_lista_negra
+FIELDS TERMINATED BY '\t'
+LINES TERMINATED BY '\n'
+(dns, categoria, idepol)")) {
+    printf("Errormessage: %s\n", $db->error);
+}
+
+// $db->set_local_infile_default();
+}
+?>

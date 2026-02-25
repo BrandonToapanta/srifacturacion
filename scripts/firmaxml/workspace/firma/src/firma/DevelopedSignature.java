@@ -1,0 +1,39 @@
+
+package firma;
+
+/**
+*
+* @author SOGA - DISISOT
+*/
+
+public class DevelopedSignature {
+    
+   public static void main(String[] args) throws Exception {
+              
+   /*String xmlPath = "c:\\1-001-020000000543.XML";
+   String pathSignature = "c:\\certificado.p12";
+   String passSignature = "constraseña";
+   String pathOut = "c:\\";
+   String nameFileOut = "factura_sign.xml";*/
+    
+   String xmlPath = args[2];
+   String pathSignature = args[0];
+   String passSignature = args[1];
+   String pathOut = args[3];
+   String nameFileOut = args[4];
+    
+   System.out.println("Ruta del XML de entrada: " + xmlPath);
+   System.out.println("Ruta Certificado: " + pathSignature);
+   System.out.println("Clave del Certificado: " + passSignature);
+   System.out.println("Ruta de salida del XML: " + pathOut);
+   System.out.println("Nombre del archivo salido: " + nameFileOut);
+    
+   try{
+   XAdESBESSignature.firmar(xmlPath, pathSignature, passSignature, pathOut, nameFileOut);
+   }catch(Exception e){
+       System.out.println("Error: " + e);
+   }
+   }
+
+  
+   }
