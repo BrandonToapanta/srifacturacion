@@ -4,10 +4,11 @@ import { SriController } from './sri.controller';
 import { SriService } from './sri.service';
 import { FirmaService } from './firma.service';
 import { ClaveAccesoService } from './claveAcceso.service';
+import { DatabaseService } from './database.service';
 
 @Module({
   controllers: [SriController],
-  providers: [SriService, FirmaService, ClaveAccesoService],
+  providers: [SriService, FirmaService, ClaveAccesoService, DatabaseService],
   exports: [SriService],
 })
 export class SriModule { }
