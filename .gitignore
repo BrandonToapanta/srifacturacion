@@ -1,6 +1,9 @@
 #firma
 *.p12
 
+#base de datos
+*.db*
+
 # compiled output
 /dist
 /node_modules
