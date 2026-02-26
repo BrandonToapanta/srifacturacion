@@ -1,8 +1,12 @@
 import { Injectable, InternalServerErrorException, BadRequestException } from '@nestjs/common';
-import * as soap from 'soap';
-import * as https from 'https';
 import { FirmaService } from './firma.service';
 import { ClaveAccesoService } from './claveAcceso.service';
+import { DatabaseService } from './database.service';
+
+import * as soap from 'soap';
+import * as https from 'https';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export interface RespuestaSri {
 	estado: 'AUTORIZADO' | 'NO AUTORIZADO' | 'DEVUELTA' | 'EN PROCESO';
@@ -15,10 +19,13 @@ export interface RespuestaSri {
 @Injectable()
 export class SriService {
 
-	private readonly URL_RECEPCION = 'https://celcer.sri.gob.ec/comprobantes-electronicos-ws/RecepcionComprobantesOffline?wsdl';
-	private readonly URL_AUTORIZACION = 'https://celcer.sri.gob.ec/comprobantes-electronicos-ws/AutorizacionComprobantesOffline?wsdl';
+	private readonly URL_RECEPCION = 'https://cel.sri.gob.ec/comprobantes-electronicos-ws/RecepcionComprobantesOffline?wsdl';
+	private readonly URL_AUTORIZACION = 'https://cel.sri.gob.ec/comprobantes-electronicos-ws/AutorizacionComprobantesOffline?wsdl';
+
 	private readonly P12_PATH = process.env.P12_PATH || './privilegio.p12';
-	private readonly P12_PASS = process.env.P12_PASS || 'Nicole70';
+	private readonly P12_PASS = process.env.P12_PASS || 'Tu_contraseña';
+
+	private readonly XML_FIRMADOS_DIR = process.env.XML_FIRMADOS_DIR || 'C:\\Users\\ASUS\\OneDrive\\Desktop\\xml_firmado';
 
 	// SSL agent para evitar errores de certificado en pruebas
 	private readonly sslAgent = new https.Agent({ rejectUnauthorized: false });
@@ -26,32 +33,115 @@ export class SriService {
 	constructor(
 		private readonly firmaService: FirmaService,
 		private readonly claveAccesoService: ClaveAccesoService,
+		private readonly db: DatabaseService,
 	) { }
 
 	async procesarComprobante(xml: string): Promise<RespuestaSri> {
 		try {
-			// Generar e inyectar claveAcceso en el XML
+			const get = (tag: string): string => {
+				const match = xml.match(new RegExp(`<${tag}>([^<]+)<\/${tag}>`));
+				return match?.[1]?.trim() || '';
+			};
+
+			const datosBusqueda = {
+				ruc: get('ruc'),
+				ambiente: get('ambiente'),
+				estab: get('estab'),
+				pto_emi: get('ptoEmi'),
+				secuencial: get('secuencial').padStart(9, '0'),
+				cod_doc: get('codDoc').padStart(2, '0'),
+			};
+
+			// ── 1. Buscar si ya existe en BD (cualquier estado) ────────────────
+			const registroExistente = this.db.buscarCualquierEstado(datosBusqueda);
+
+			if (registroExistente) {
+				console.log(`Registro encontrado en BD - Estado: ${registroExistente.estado} - Clave: ${registroExistente.clave_acceso}`);
+
+				// Ya fue autorizado — retornar directamente
+				if (registroExistente.estado === 'AUTORIZADO') {
+					const rutaXml = path.join(this.XML_FIRMADOS_DIR, `${registroExistente.clave_acceso}.xml`);
+					const xmlFirmado = fs.existsSync(rutaXml) ? fs.readFileSync(rutaXml, 'utf8') : '';
+					return {
+						estado: 'AUTORIZADO',
+						numeroAutorizacion: registroExistente.numero_autorizacion,
+						fechaAutorizacion: registroExistente.fecha_autorizacion,
+						xmlFirmado,
+						errores: [],
+					};
+				}
+
+				// Está PENDIENTE — reusar la misma clave y reintentar autorización
+				if (registroExistente.estado === 'PENDIENTE') {
+					console.log('Reintentando autorización con clave existente:', registroExistente.clave_acceso);
+
+					// Reconstruir el XML con la clave existente
+					let xmlConClave = xml;
+					if (xmlConClave.includes('<claveAcceso>')) {
+						xmlConClave = xmlConClave.replace(
+							/<claveAcceso>[^<]*<\/claveAcceso>/,
+							`<claveAcceso>${registroExistente.clave_acceso}</claveAcceso>`
+						);
+					} else {
+						xmlConClave = xmlConClave.replace(
+							/(<codDoc>[^<]+<\/codDoc>)/,
+							`$1<claveAcceso>${registroExistente.clave_acceso}</claveAcceso>`
+						);
+					}
+
+					const xmlFirmado = this.firmaService.firmarXml(xmlConClave, this.P12_PATH, this.P12_PASS);
+
+					const recepcion = await this.enviarComprobante(xmlFirmado);
+					if (recepcion.estado === 'DEVUELTA') {
+						return { estado: 'DEVUELTA', xmlFirmado, errores: recepcion.errores };
+					}
+
+					const autorizacion = await this.esperarAutorizacion(registroExistente.clave_acceso);
+
+					if (autorizacion.estado === 'AUTORIZADO') {
+						this.guardarXmlFirmado(xmlFirmado, registroExistente.clave_acceso);
+						this.db.actualizarAutorizacion({
+							clave_acceso: registroExistente.clave_acceso,
+							numero_autorizacion: String(autorizacion.numeroAutorizacion ?? ''),
+							fecha_autorizacion: String(autorizacion.fechaAutorizacion ?? ''),
+							estado: 'AUTORIZADO',
+						});
+					}
+
+					return { ...autorizacion, xmlFirmado };
+				}
+			}
+
+			// ── 2. No existe — procesar como nuevo ─────────────────────────────
 			const xmlConClave = this.inyectarClaveAcceso(xml);
-
-			// Firmar el XML
+			const claveAcceso = this.extraerClaveAcceso(xmlConClave);
 			const xmlFirmado = this.firmaService.firmarXml(xmlConClave, this.P12_PATH, this.P12_PASS);
-
-			// Extraer y validar la clave de acceso
-			const claveAcceso = this.extraerClaveAcceso(xmlFirmado);
 
 			if (!this.claveAccesoService.validarClaveAcceso(claveAcceso)) {
 				throw new BadRequestException(`Clave de acceso inválida: ${claveAcceso}`);
 			}
 
-			// Enviar al SRI
-			const recepcion = await this.enviarComprobante(xmlFirmado);
+			this.db.insertar({
+				...datosBusqueda,
+				clave_acceso: claveAcceso,
+			});
 
+			const recepcion = await this.enviarComprobante(xmlFirmado);
 			if (recepcion.estado === 'DEVUELTA') {
 				return { estado: 'DEVUELTA', xmlFirmado, errores: recepcion.errores };
 			}
 
-			// Polling de autorización
 			const autorizacion = await this.esperarAutorizacion(claveAcceso);
+
+			if (autorizacion.estado === 'AUTORIZADO') {
+				this.guardarXmlFirmado(xmlFirmado, claveAcceso);
+				this.db.actualizarAutorizacion({
+					clave_acceso: claveAcceso,
+					numero_autorizacion: String(autorizacion.numeroAutorizacion ?? ''),
+					fecha_autorizacion: String(autorizacion.fechaAutorizacion ?? ''),
+					estado: 'AUTORIZADO',
+				});
+			}
 
 			return { ...autorizacion, xmlFirmado };
 
@@ -333,6 +423,21 @@ export class SriService {
 				opcionB_standalone: { valida: validB, c14n: siC14nB.substring(0, 150) },
 			}
 		};
+	}
+
+	private guardarXmlFirmado(xmlFirmado: string, claveAcceso: string): string {
+		try {
+			if (!fs.existsSync(this.XML_FIRMADOS_DIR)) {
+				fs.mkdirSync(this.XML_FIRMADOS_DIR, { recursive: true });
+			}
+			const rutaArchivo = path.join(this.XML_FIRMADOS_DIR, `${claveAcceso}.xml`);
+			fs.writeFileSync(rutaArchivo, xmlFirmado, 'utf8');
+			console.log('XML guardado:', rutaArchivo);
+			return rutaArchivo;
+		} catch (e: any) {
+			console.error('Error al guardar XML:', e.message);
+			return '';
+		}
 	}
 }
 
