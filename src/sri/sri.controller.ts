@@ -19,8 +19,4 @@ export class SriController {
 		return this.sriService.consultarClaveDirecta(clave);
 	}
 
-	@Post('diagnostico')
-	async diagnostico(@Body() dto: { xmlFirmado: string }) {
-		return this.sriService.diagnosticarFirma(dto.xmlFirmado);
-	}
 }

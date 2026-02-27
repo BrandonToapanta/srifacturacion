@@ -1,10 +1,10 @@
-// src/sri/database.service.ts
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import Database from 'better-sqlite3';
-import * as path from 'path';
 
 @Injectable()
 export class DatabaseService implements OnModuleInit {
+
+	private readonly logger = new Logger(DatabaseService.name);
 
 	private db: Database.Database;
 	private readonly DB_PATH = process.env.DB_PATH || './sri_comprobantes.db';
@@ -13,7 +13,8 @@ export class DatabaseService implements OnModuleInit {
 		this.db = new Database(this.DB_PATH);
 		this.db.pragma('journal_mode = WAL'); // mejor rendimiento
 		this.crearTablas();
-		console.log('Base de datos SQLite iniciada:', this.DB_PATH);
+
+		this.logger.log(`Base de datos SQLite iniciada: ${this.DB_PATH}`);
 	}
 
 	private crearTablas() {
@@ -60,7 +61,7 @@ export class DatabaseService implements OnModuleInit {
 			clave_acceso: data.clave_acceso ?? null,
 		};
 
-		console.log('Insertando en SQLite:', JSON.stringify(safeData));
+		this.logger.log(`Insertando en SQLite: ${safeData.estab}-${safeData.pto_emi}-${safeData.secuencial}`);
 
 		const stmt = this.db.prepare(`
         INSERT OR IGNORE INTO comprobantes
@@ -84,7 +85,7 @@ export class DatabaseService implements OnModuleInit {
 			estado: String(data.estado ?? ''),
 		};
 
-		console.log('Actualizando SQLite:', JSON.stringify(safeData));
+		this.logger.log(`Actualizando autorizacion en SQLite: ${safeData.estado} - ${safeData.clave_acceso}`);
 
 		const stmt = this.db.prepare(`
         UPDATE comprobantes SET
@@ -152,7 +153,6 @@ export class DatabaseService implements OnModuleInit {
 		return stmt.get(data) as any || null;
 	}
 
-	// ── Listar todos (opcional, para debug) ───────────────────────────────────
 	listarTodos(limite = 50): any[] {
 		return this.db.prepare(`
       SELECT * FROM comprobantes ORDER BY fecha_creacion DESC LIMIT ?

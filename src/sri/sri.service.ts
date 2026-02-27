@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, BadRequestException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, BadRequestException, Logger } from '@nestjs/common';
 import { FirmaService } from './firma.service';
 import { ClaveAccesoService } from './claveAcceso.service';
 import { DatabaseService } from './database.service';
@@ -19,11 +19,13 @@ export interface RespuestaSri {
 @Injectable()
 export class SriService {
 
-	private readonly URL_RECEPCION = 'https://cel.sri.gob.ec/comprobantes-electronicos-ws/RecepcionComprobantesOffline?wsdl';
-	private readonly URL_AUTORIZACION = 'https://cel.sri.gob.ec/comprobantes-electronicos-ws/AutorizacionComprobantesOffline?wsdl';
+	private readonly logger = new Logger(SriService.name);
+
+	private readonly URL_RECEPCION = process.env.URL_RECEPCION || 'https://cel.sri.gob.ec/comprobantes-electronicos-ws/RecepcionComprobantesOffline?wsdl';
+	private readonly URL_AUTORIZACION = process.env.URL_AUTORIZACION || 'https://cel.sri.gob.ec/comprobantes-electronicos-ws/AutorizacionComprobantesOffline?wsdl';
 
 	private readonly P12_PATH = process.env.P12_PATH || './privilegio.p12';
-	private readonly P12_PASS = process.env.P12_PASS || 'Tu_contraseña';
+	private readonly P12_PASS = process.env.P12_PASS || 'TuContraseñaP12';
 
 	private readonly XML_FIRMADOS_DIR = process.env.XML_FIRMADOS_DIR || 'C:\\Users\\ASUS\\OneDrive\\Desktop\\xml_firmado';
 
@@ -38,6 +40,9 @@ export class SriService {
 
 	async procesarComprobante(xml: string): Promise<RespuestaSri> {
 		try {
+			// Forzar ambiente=2 en el XML para produccion
+			xml = xml.replace(/<ambiente>[^<]*<\/ambiente>/, `<ambiente>2</ambiente>`);
+
 			const get = (tag: string): string => {
 				const match = xml.match(new RegExp(`<${tag}>([^<]+)<\/${tag}>`));
 				return match?.[1]?.trim() || '';
@@ -52,11 +57,12 @@ export class SriService {
 				cod_doc: get('codDoc').padStart(2, '0'),
 			};
 
-			// ── 1. Buscar si ya existe en BD (cualquier estado) ────────────────
+			const nombreDoc = `${get('codDoc')}-${get('estab')}${get('ptoEmi')}-${get('secuencial')}`;
+
+			// Buscar si ya existe
 			const registroExistente = this.db.buscarCualquierEstado(datosBusqueda);
 
 			if (registroExistente) {
-				console.log(`Registro encontrado en BD - Estado: ${registroExistente.estado} - Clave: ${registroExistente.clave_acceso}`);
 
 				// Ya fue autorizado — retornar directamente
 				if (registroExistente.estado === 'AUTORIZADO') {
@@ -73,7 +79,7 @@ export class SriService {
 
 				// Está PENDIENTE — reusar la misma clave y reintentar autorización
 				if (registroExistente.estado === 'PENDIENTE') {
-					console.log('Reintentando autorización con clave existente:', registroExistente.clave_acceso);
+					this.logger.log(`Reintentando autorización: ${registroExistente.clave_acceso}`);
 
 					// Reconstruir el XML con la clave existente
 					let xmlConClave = xml;
@@ -93,26 +99,30 @@ export class SriService {
 
 					const recepcion = await this.enviarComprobante(xmlFirmado);
 					if (recepcion.estado === 'DEVUELTA') {
+
+						this.logger.warn(`Comprobante devuelto en reintento autorización: ${registroExistente.clave_acceso}`);
+
 						return { estado: 'DEVUELTA', xmlFirmado, errores: recepcion.errores };
 					}
 
 					const autorizacion = await this.esperarAutorizacion(registroExistente.clave_acceso);
 
 					if (autorizacion.estado === 'AUTORIZADO') {
-						this.guardarXmlFirmado(xmlFirmado, registroExistente.clave_acceso);
+						this.guardarXmlFirmado(xmlFirmado, nombreDoc);
 						this.db.actualizarAutorizacion({
 							clave_acceso: registroExistente.clave_acceso,
 							numero_autorizacion: String(autorizacion.numeroAutorizacion ?? ''),
 							fecha_autorizacion: String(autorizacion.fechaAutorizacion ?? ''),
 							estado: 'AUTORIZADO',
 						});
+
+						this.logger.log(`Comprobante autorizado: ${registroExistente.clave_acceso}`);
 					}
 
 					return { ...autorizacion, xmlFirmado };
 				}
 			}
 
-			// ── 2. No existe — procesar como nuevo ─────────────────────────────
 			const xmlConClave = this.inyectarClaveAcceso(xml);
 			const claveAcceso = this.extraerClaveAcceso(xmlConClave);
 			const xmlFirmado = this.firmaService.firmarXml(xmlConClave, this.P12_PATH, this.P12_PASS);
@@ -128,25 +138,30 @@ export class SriService {
 
 			const recepcion = await this.enviarComprobante(xmlFirmado);
 			if (recepcion.estado === 'DEVUELTA') {
+
+				this.logger.warn(`Comprobante devuelto en recepción: ${claveAcceso}`);
+
 				return { estado: 'DEVUELTA', xmlFirmado, errores: recepcion.errores };
 			}
 
 			const autorizacion = await this.esperarAutorizacion(claveAcceso);
 
 			if (autorizacion.estado === 'AUTORIZADO') {
-				this.guardarXmlFirmado(xmlFirmado, claveAcceso);
+				this.guardarXmlFirmado(xmlFirmado, nombreDoc);
 				this.db.actualizarAutorizacion({
 					clave_acceso: claveAcceso,
 					numero_autorizacion: String(autorizacion.numeroAutorizacion ?? ''),
 					fecha_autorizacion: String(autorizacion.fechaAutorizacion ?? ''),
 					estado: 'AUTORIZADO',
 				});
+
+				this.logger.log(`Comprobante autorizado: ${claveAcceso}`);
 			}
 
 			return { ...autorizacion, xmlFirmado };
 
 		} catch (e: any) {
-			console.error('ERROR:', e.message);
+			this.logger.error(`ERROR: ${e.message}`);
 			throw new InternalServerErrorException(e.message);
 		}
 	}
@@ -170,8 +185,6 @@ export class SriService {
 			secuencial: get('secuencial'),
 			tipoEmision: get('tipoEmision'),
 		});
-
-		console.log('Clave generada:', claveAcceso);
 
 		// Si ya existe <claveAcceso> la reemplaza, si no la inserta después de <codDoc>
 		if (xml.includes('<claveAcceso>')) {
@@ -197,7 +210,6 @@ export class SriService {
 			(client as any).httpClient.requestOptions = { agent: this.sslAgent };
 
 			const [result] = await client.validarComprobanteAsync({ xml: xmlBase64 });
-			console.log('Resultado recepción raw:', JSON.stringify(result));
 
 			const respuesta = result?.RespuestaRecepcionComprobante;
 			const estado = respuesta?.estado;
@@ -216,7 +228,6 @@ export class SriService {
 		esperaMs = 8000,     // 8 segundos entre cada intento
 	): Promise<Omit<RespuestaSri, 'xmlFirmado'>> {
 		for (let i = 0; i < intentos; i++) {
-			console.log(`Intento autorización ${i + 1}/${intentos} - esperando ${esperaMs}ms...`);
 			await new Promise((r) => setTimeout(r, esperaMs));
 			try {
 				const client = await soap.createClientAsync(this.URL_AUTORIZACION, {
@@ -228,13 +239,10 @@ export class SriService {
 					claveAccesoComprobante: claveAcceso,
 				});
 
-				console.log(`Resultado autorización intento ${i + 1}:`, JSON.stringify(result));
-
 				const respuesta = result?.RespuestaAutorizacionComprobante;
 
 				// Si la respuesta viene null o sin autorizaciones, reintenta
 				if (!respuesta?.autorizaciones?.autorizacion) {
-					console.log('Sin respuesta aún, reintentando...');
 					continue;
 				}
 
@@ -245,7 +253,7 @@ export class SriService {
 					? (Array.isArray(mensajes) ? mensajes : [mensajes])
 					: [];
 
-				console.log('Estado:', estado);
+				this.logger.log(`Estado autorización: ${estado}`);
 
 				if (estado === 'AUTORIZADO') {
 					return {
@@ -260,12 +268,8 @@ export class SriService {
 					return { estado, errores };
 				}
 
-				// EN PROCESO o cualquier otro → reintenta
-				console.log('En proceso, reintentando...');
-
 			} catch (e: any) {
-				console.error(`Error autorización intento ${i + 1}:`, e.message);
-				// No lanzar error, reintentar
+				this.logger.error(`Error autorización intento ${i + 1}: ${e.message}`);
 				continue;
 			}
 		}
@@ -279,7 +283,6 @@ export class SriService {
 		return match[1].trim();
 	}
 
-	// Agrega este método en sri.service.ts
 	async consultarClaveDirecta(claveAcceso: string) {
 		try {
 			const client = await soap.createClientAsync(this.URL_AUTORIZACION, {
@@ -291,151 +294,25 @@ export class SriService {
 				claveAccesoComprobante: claveAcceso,
 			});
 
-			console.log('Consulta directa resultado:', JSON.stringify(result, null, 2));
+			this.logger.log(`Consulta directa clave: ${claveAcceso}`);
+
 			return result;
 		} catch (e: any) {
 			return { error: e.message };
 		}
 	}
 
-	async diagnosticarFirma(xmlFirmado: string) {
-		const { DOMParser } = require('@xmldom/xmldom');
-		const { C14nCanonicalization } = require('xml-crypto');
-		const crypto = require('crypto');
-		const c14n = new C14nCanonicalization();
-
-		const doc = new DOMParser().parseFromString(xmlFirmado, 'text/xml');
-
-		// 1. Extraer digests declarados en el SignedInfo
-		const getTagValue = (tag: string) => {
-			const match = xmlFirmado.match(new RegExp(`<ds:${tag}[^>]*>([^<]+)<\/ds:${tag}>`));
-			return match?.[1]?.trim();
-		};
-
-		const digestDoc = getTagValue('DigestValue');  // primer DigestValue = SignedProperties
-		const digestValues = [...xmlFirmado.matchAll(/<ds:DigestValue>([^<]+)<\/ds:DigestValue>/g)];
-		const declaredDigestSP = digestValues[0]?.[1]?.trim();
-		const declaredDigestKI = digestValues[1]?.[1]?.trim();
-		const declaredDigestDoc = digestValues[2]?.[1]?.trim();
-
-		// 2. Calcular digest del documento SIN la firma (enveloped-signature)
-		// Remover el elemento ds:Signature del XML
-		const xmlSinFirma = xmlFirmado.replace(/<ds:Signature[\s\S]*<\/ds:Signature>/, '');
-		const docSinFirma = new DOMParser().parseFromString(xmlSinFirma, 'text/xml');
-		const docC14n = c14n.process(docSinFirma.documentElement, {
-			defaultNs: '',
-			ancestorNamespaces: [],
-		});
-		const calculatedDigestDoc = crypto.createHash('sha1').update(docC14n, 'utf8').digest('base64');
-
-		// 3. Extraer y calcular digest del KeyInfo
-		const keyInfoMatch = xmlFirmado.match(/<ds:KeyInfo Id="[^"]*">([\s\S]*?)<\/ds:KeyInfo>/);
-		const keyInfoXml = keyInfoMatch?.[0] || '';
-		const kiWrapper = `<root xmlns:ds="http://www.w3.org/2000/09/xmldsig#">${keyInfoXml}</root>`;
-		const kiDoc = new DOMParser().parseFromString(kiWrapper, 'text/xml');
-		const kiEl = kiDoc.documentElement.firstChild as any;
-		const kiC14n = c14n.process(kiEl, {
-			defaultNs: '',
-			ancestorNamespaces: [{ prefix: 'ds', namespaceURI: 'http://www.w3.org/2000/09/xmldsig#' }],
-		});
-		const calculatedDigestKI = crypto.createHash('sha1').update(kiC14n, 'utf8').digest('base64');
-
-		// 4. Extraer y calcular digest del SignedProperties
-		const spMatch = xmlFirmado.match(/<etsi:SignedProperties[\s\S]*?<\/etsi:SignedProperties>/);
-		const spXml = spMatch?.[0] || '';
-		const spWrapper = `<root xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:etsi="http://uri.etsi.org/01903/v1.3.2#">${spXml}</root>`;
-		const spDoc = new DOMParser().parseFromString(spWrapper, 'text/xml');
-		const spEl = spDoc.documentElement.firstChild as any;
-		const spC14n = c14n.process(spEl, {
-			defaultNs: '',
-			ancestorNamespaces: [
-				{ prefix: 'ds', namespaceURI: 'http://www.w3.org/2000/09/xmldsig#' },
-				{ prefix: 'etsi', namespaceURI: 'http://uri.etsi.org/01903/v1.3.2#' },
-			],
-		});
-		const calculatedDigestSP = crypto.createHash('sha1').update(spC14n, 'utf8').digest('base64');
-
-		// 5. Verificar la firma del SignedInfo
-		const forge = require('node-forge');
-
-		// Extraer el certificado del KeyInfo
-		const certB64Match = xmlFirmado.match(/<ds:X509Certificate>\s*([\s\S]*?)\s*<\/ds:X509Certificate>/);
-		const certB64 = certB64Match?.[1]?.replace(/\s/g, '') || '';
-		const certDer = forge.util.decode64(certB64);
-		const certAsn1 = forge.asn1.fromDer(certDer);
-		const cert = forge.pki.certificateFromAsn1(certAsn1);
-		const publicKeyPem = forge.pki.publicKeyToPem(cert.publicKey);
-
-		// Extraer el SignedInfo del XML
-		const signedInfoMatch = xmlFirmado.match(/(<ds:SignedInfo[\s\S]*?<\/ds:SignedInfo>)/);
-		const signedInfoXml = signedInfoMatch?.[1] || '';
-
-		// Extraer el SignatureValue
-		const sigValueMatch = xmlFirmado.match(/<ds:SignatureValue[^>]*>\s*([\s\S]*?)\s*<\/ds:SignatureValue>/);
-		const sigValueB64 = sigValueMatch?.[1]?.replace(/\s/g, '') || '';
-		const signature = Buffer.from(sigValueB64, 'base64');
-
-		// Intentar verificar con diferentes canonicalizaciones
-
-		// Opción A: SignedInfo con xmlns:ds del padre (como está en el documento)
-		const siWrapperA = `<root xmlns:ds="http://www.w3.org/2000/09/xmldsig#">${signedInfoXml}</root>`;
-		const siDocA = new DOMParser().parseFromString(siWrapperA, 'text/xml');
-		const siElA = siDocA.documentElement.firstChild as any;
-		const siC14nA = c14n.process(siElA, {
-			defaultNs: '',
-			ancestorNamespaces: [{ prefix: 'ds', namespaceURI: 'http://www.w3.org/2000/09/xmldsig#' }],
-		});
-
-		// Opción B: SignedInfo standalone (con xmlns:ds en el propio elemento)
-		const siDocB = new DOMParser().parseFromString(signedInfoXml, 'text/xml');
-		const siC14nB = c14n.process(siDocB.documentElement, {
-			defaultNs: '',
-			ancestorNamespaces: [],
-		});
-
-		// Verificar ambas opciones
-		const verifyA = crypto.createVerify('RSA-SHA1');
-		verifyA.update(siC14nA, 'utf8');
-		const validA = verifyA.verify(publicKeyPem, signature);
-
-		const verifyB = crypto.createVerify('RSA-SHA1');
-		verifyB.update(siC14nB, 'utf8');
-		const validB = verifyB.verify(publicKeyPem, signature);
-
-		return {
-			signedProperties: {
-				declarado: declaredDigestSP,
-				calculado: calculatedDigestSP,
-				coincide: declaredDigestSP === calculatedDigestSP,
-			},
-			keyInfo: {
-				declarado: declaredDigestKI,
-				calculado: calculatedDigestKI,
-				coincide: declaredDigestKI === calculatedDigestKI,
-			},
-			documento: {
-				declarado: declaredDigestDoc,
-				calculado: calculatedDigestDoc,
-				coincide: declaredDigestDoc === calculatedDigestDoc,
-			},
-			firma: {
-				opcionA_conAncestorNs: { valida: validA, c14n: siC14nA.substring(0, 150) },
-				opcionB_standalone: { valida: validB, c14n: siC14nB.substring(0, 150) },
-			}
-		};
-	}
-
-	private guardarXmlFirmado(xmlFirmado: string, claveAcceso: string): string {
+	private guardarXmlFirmado(xmlFirmado: string, nomDocumento: string): string {
 		try {
 			if (!fs.existsSync(this.XML_FIRMADOS_DIR)) {
 				fs.mkdirSync(this.XML_FIRMADOS_DIR, { recursive: true });
 			}
-			const rutaArchivo = path.join(this.XML_FIRMADOS_DIR, `${claveAcceso}.xml`);
+			const rutaArchivo = path.join(this.XML_FIRMADOS_DIR, `${nomDocumento}.xml`);
 			fs.writeFileSync(rutaArchivo, xmlFirmado, 'utf8');
-			console.log('XML guardado:', rutaArchivo);
+			this.logger.log(`XML firmado guardado doc: ${nomDocumento}.xml`);
 			return rutaArchivo;
 		} catch (e: any) {
-			console.error('Error al guardar XML:', e.message);
+			this.logger.error(`Error al guardar XML: ${e.message}`);
 			return '';
 		}
 	}

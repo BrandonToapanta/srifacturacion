@@ -1,8 +1,10 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import * as crypto from 'crypto';
 
 @Injectable()
 export class ClaveAccesoService {
+
+	private readonly logger = new Logger(ClaveAccesoService.name);
 
 	generarClaveAcceso(params: {
 		fechaEmision: string;  // formato: DD/MM/YYYY
@@ -40,8 +42,8 @@ export class ClaveAccesoService {
 		const digitoVerificador = this.moduloOnce(clave48);
 
 		const claveAcceso = clave48 + digitoVerificador;
-		console.log('Clave de acceso generada:', claveAcceso);
-		console.log('Longitud:', claveAcceso.length);
+
+		this.logger.log(`Clave de acceso generada: ${claveAcceso}`);
 
 		return claveAcceso;
 	}
@@ -84,7 +86,7 @@ export class ClaveAccesoService {
 		return numero.toString();
 	}
 
-	// ── Validar una clave de acceso existente ─────────────────────────────────
+	// Validar una clave de acceso existente
 	validarClaveAcceso(claveAcceso: string): boolean {
 		if (claveAcceso.length !== 49) return false;
 		const clave48 = claveAcceso.substring(0, 48);
