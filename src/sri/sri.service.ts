@@ -7,6 +7,7 @@ import * as soap from 'soap';
 import * as https from 'https';
 import * as fs from 'fs';
 import * as path from 'path';
+import { FacturaPdfService } from './facturaPdf.service';
 
 export interface RespuestaSri {
 	estado: 'AUTORIZADO' | 'NO AUTORIZADO' | 'DEVUELTA' | 'EN PROCESO';
@@ -36,6 +37,7 @@ export class SriService {
 		private readonly firmaService: FirmaService,
 		private readonly claveAccesoService: ClaveAccesoService,
 		private readonly db: DatabaseService,
+		private readonly facturaPdfService: FacturaPdfService,
 	) { }
 
 	async procesarComprobante(xml: string): Promise<RespuestaSri> {
@@ -66,15 +68,7 @@ export class SriService {
 
 				// Ya fue autorizado — retornar directamente
 				if (registroExistente.estado === 'AUTORIZADO') {
-					const rutaXml = path.join(this.XML_FIRMADOS_DIR, `${registroExistente.clave_acceso}.xml`);
-					const xmlFirmado = fs.existsSync(rutaXml) ? fs.readFileSync(rutaXml, 'utf8') : '';
-					return {
-						estado: 'AUTORIZADO',
-						numeroAutorizacion: registroExistente.numero_autorizacion,
-						fechaAutorizacion: registroExistente.fecha_autorizacion,
-						xmlFirmado,
-						errores: [],
-					};
+					return this.consultarYGenerarPdf(registroExistente.clave_acceso);
 				}
 
 				// Está PENDIENTE — reusar la misma clave y reintentar autorización
@@ -109,6 +103,22 @@ export class SriService {
 
 					if (autorizacion.estado === 'AUTORIZADO') {
 						this.guardarXmlFirmado(xmlFirmado, nombreDoc);
+
+						try {
+							this.logger.log(`Generando PDF para clave: ${registroExistente.clave_acceso}`);
+							const rutaPdf = await this.facturaPdfService.generarDesdeXml(
+								xmlFirmado,
+								nombreDoc,   // ← mismo nombre que el XML
+								autorizacion.numeroAutorizacion,
+								String(autorizacion.fechaAutorizacion ?? ''),
+							);
+							this.logger.log(`PDF generado en: ${rutaPdf}`);
+						} catch (pdfError: any) {
+							this.logger.error(`Error generando PDF: ${pdfError.message}`);
+							this.logger.error(pdfError.stack);
+						}
+
+
 						this.db.actualizarAutorizacion({
 							clave_acceso: registroExistente.clave_acceso,
 							numero_autorizacion: String(autorizacion.numeroAutorizacion ?? ''),
@@ -148,6 +158,14 @@ export class SriService {
 
 			if (autorizacion.estado === 'AUTORIZADO') {
 				this.guardarXmlFirmado(xmlFirmado, nombreDoc);
+
+				await this.facturaPdfService.generarDesdeXml(
+					xmlFirmado,
+					claveAcceso,
+					autorizacion.numeroAutorizacion,
+					String(autorizacion.fechaAutorizacion)
+				);
+
 				this.db.actualizarAutorizacion({
 					clave_acceso: claveAcceso,
 					numero_autorizacion: String(autorizacion.numeroAutorizacion ?? ''),
@@ -314,6 +332,69 @@ export class SriService {
 		} catch (e: any) {
 			this.logger.error(`Error al guardar XML: ${e.message}`);
 			return '';
+		}
+	}
+
+	async consultarYGenerarPdf(claveAcceso: string): Promise<any> {
+		try {
+			// 1. Consultar al SRI
+			const resultado = await this.consultarClaveDirecta(claveAcceso);
+			const autorizacion = resultado?.RespuestaAutorizacionComprobante?.autorizaciones?.autorizacion;
+
+			if (!autorizacion || autorizacion.estado !== 'AUTORIZADO') {
+				throw new BadRequestException(`Comprobante no autorizado o no encontrado: ${claveAcceso}`);
+			}
+
+			// 2. Extraer el XML del comprobante que devuelve el SRI
+			const xmlFirmado = autorizacion.comprobante;
+			if (!xmlFirmado) {
+				throw new BadRequestException('El SRI no devolvió el comprobante XML');
+			}
+
+			// 3. Formatear fecha
+			const fechaAutorizacion = autorizacion.fechaAutorizacion instanceof Date
+				? autorizacion.fechaAutorizacion.toISOString()
+				: String(autorizacion.fechaAutorizacion ?? '');
+
+			// 4. Construir nombreDoc para guardar
+			const get = (tag: string) => xmlFirmado.match(new RegExp(`<${tag}>([^<]+)<\/${tag}>`))?.[1]?.trim() || '';
+			const nombreDoc = `${get('codDoc')}-${get('estab')}${get('ptoEmi')}-${get('secuencial')}`;
+
+			// 5. Guardar XML actualizado
+			this.guardarXmlFirmado(xmlFirmado, nombreDoc);
+
+			// 6. Generar PDF
+			try {
+				const rutaPdf = await this.facturaPdfService.generarDesdeXml(
+					xmlFirmado,
+					nombreDoc,
+					autorizacion.numeroAutorizacion,
+					fechaAutorizacion,
+				);
+				this.logger.log(`PDF generado: ${rutaPdf}`);
+			} catch (pdfErr: any) {
+				this.logger.error(`Error generando PDF: ${pdfErr.message}`);
+			}
+
+			// 7. Actualizar BD por si acaso
+			this.db.actualizarAutorizacion({
+				clave_acceso: claveAcceso,
+				numero_autorizacion: autorizacion.numeroAutorizacion,
+				fecha_autorizacion: fechaAutorizacion,
+				estado: 'AUTORIZADO',
+			});
+
+			return {
+				estado: 'AUTORIZADO',
+				numeroAutorizacion: autorizacion.numeroAutorizacion,
+				fechaAutorizacion: fechaAutorizacion,
+				xmlFirmado,
+				nombreDoc,
+			};
+
+		} catch (e: any) {
+			this.logger.error(`Error consultarYGenerarPdf: ${e.message}`);
+			throw new InternalServerErrorException(e.message);
 		}
 	}
 }
