@@ -161,7 +161,7 @@ export class SriService {
 
 				await this.facturaPdfService.generarDesdeXml(
 					xmlFirmado,
-					claveAcceso,
+					nombreDoc,
 					autorizacion.numeroAutorizacion,
 					String(autorizacion.fechaAutorizacion)
 				);

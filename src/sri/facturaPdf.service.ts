@@ -9,14 +9,10 @@ export class FacturaPdfService {
 
 	private readonly PDF_DIR = process.env.PDF_FACTURAS_DIR || 'C:\\Users\\ASUS\\OneDrive\\Desktop\\facturasPdf';  // Cambia esta ruta según tu entorno
 	private readonly TEMPLATE_PATH = process.env.FACTURA_TEMPLATE || path.join(__dirname, '..', '..', 'templates', 'factura.template.html');
-	private readonly LOGO_PATH = process.env.LOGO_PATH || '';  // ruta al logo en base64 o imagen
+	private readonly LOGO_PATH = process.env.LOGO_PATH || path.join(process.cwd(), 'src', 'img', 'logo-privilegio.png');  // ruta al logo en base64 o imagen
 
 	// ── Punto de entrada principal ─────────────────────────────────────────────
 	async generarDesdeXml(xmlFirmado: string, nombreDoc: string, numeroAutorizacion?: string, fechaAutorizacion?: string): Promise<string> {
-
-		this.logger.log(`Iniciando generación PDF - dir: ${this.PDF_DIR}`);
-		this.logger.log(`Template path: ${this.TEMPLATE_PATH}`);
-		this.logger.log(`Template existe: ${fs.existsSync(this.TEMPLATE_PATH)}`);
 		const datos = this.parsearXml(xmlFirmado, numeroAutorizacion, fechaAutorizacion);
 		return this.generarPdf(datos, nombreDoc);
 	}
@@ -47,7 +43,7 @@ export class FacturaPdfService {
 		const detalles = detallesRaw.map(d => {
 			const g = (tag: string) => d.match(new RegExp(`<${tag}>([^<]+)<\/${tag}>`))?.[1]?.trim() || '';
 			return {
-				codigoPrincipal: g('codigoPrincipal'),
+				codigoPrincipal: g('codigoInterno') || g('codigoPrincipal'),
 				codigoAuxiliar: g('codigoAuxiliar'),
 				descripcion: g('descripcion'),
 				cantidad: g('cantidad'),
@@ -67,7 +63,7 @@ export class FacturaPdfService {
 		// Totales por tipo de IVA
 		const subtotal15 = get('totalSinImpuestos');
 		const totalDescuento = parseFloat(get('totalDescuento') || '0').toFixed(2);
-		const importeTotal = get('importeTotal');
+		const importeTotal = get('importeTotal') || get('valorModificacion');
 
 		// Fecha autorización — formatear si viene como ISO
 		let fechaAutStr = fechaAutorizacion || get('fechaAutorizacion') || '';
@@ -88,6 +84,7 @@ export class FacturaPdfService {
 			// Documento
 			ambiente,
 			tipoEmision,
+			codDoc: get('codDoc'),
 			estab: get('estab'),
 			ptoEmi: get('ptoEmi'),
 			secuencial: get('secuencial'),
@@ -212,10 +209,16 @@ export class FacturaPdfService {
 		// Pie de página opcional
 		const piePagina = datos.piePagina || '';
 
+		const tiposDocumento = {
+			'01': 'FACTURA',
+			'04': 'NOTA DE CRÉDITO',
+		};
+
 		// Reemplazar todas las variables {{variable}}
 		const vars: Record<string, string> = {
 			razonSocial: datos.razonSocial,
 			ruc: datos.ruc,
+			tipoDoc: tiposDocumento[datos.codDoc] || 'FACTURA',
 			dirMatriz: datos.dirMatriz,
 			dirEstablecimiento: datos.dirEstablecimiento,
 			contribuyenteEspecial: datos.contribuyenteEspecial,

@@ -267,9 +267,9 @@
 			<!-- Izquierda: logo + datos emisor -->
 			<div class="left-header">
 				<div class="logo-wrapper">
-					{{#if logoBase64}}
-					<img class="logo" src="data:image/png;base64,{{logoBase64}}" alt="Logo">
-					{{/if}}
+					<img class="logo"
+						src="https://www.privilegioseguros.com.ec/wp-content/uploads/2025/12/logo-privilegio-cia-de-seguros-2.png"
+						alt="Logo">
 				</div>
 				<div class="box emisor-info">
 					<div class="razon-social">{{razonSocial}}</div>
@@ -285,7 +285,7 @@
 			<!-- Derecha: datos de la factura -->
 			<div class="box factura-info">
 				<p class="bold">R.U.C: {{ruc}}</p>
-				<div class="tipo-doc">F A C T U R A</div>
+				<div class="tipo-doc">{{tipoDoc}}</div>
 				<p><span class="bold">No.:</span> {{estab}}-{{ptoEmi}}-{{secuencial}}</p>
 				<p class="bold">NUMERO DE AUTORIZACION</p>
 				<p class="clave-acceso-text">{{numeroAutorizacion}}</p>
