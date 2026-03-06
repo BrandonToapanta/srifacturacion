@@ -371,7 +371,7 @@ export class SriService {
 					autorizacion.numeroAutorizacion,
 					fechaAutorizacion,
 				);
-				this.logger.log(`PDF generado: ${rutaPdf}`);
+				this.logger.log(`PDF generado: ${nombreDoc}.pdf`);
 			} catch (pdfErr: any) {
 				this.logger.error(`Error generando PDF: ${pdfErr.message}`);
 			}
