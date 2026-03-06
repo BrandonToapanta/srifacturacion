@@ -133,13 +133,10 @@ export class FacturaPdfService {
 				printBackground: true,
 			});
 			await browser.close();
-			console.log('PDF generado:', rutaPdf);
 		} catch (e: any) {
 			// Fallback: guardar HTML si puppeteer no está disponible
 			const rutaHtml = rutaPdf.replace('.pdf', '.html');
 			fs.writeFileSync(rutaHtml, html, 'utf8');
-			console.warn('Puppeteer no disponible, guardado como HTML:', rutaHtml);
-			console.warn('Instala con: npm install puppeteer');
 			return rutaHtml;
 		}
 
