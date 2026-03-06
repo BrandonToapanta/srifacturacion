@@ -15,7 +15,7 @@
 
 		body {
 			font-family: Arial, sans-serif;
-			font-size: 10px;
+			font-size: 11px;
 			margin: 0;
 			padding: 0;
 		}
@@ -28,6 +28,7 @@
 		.container {
 			width: 100%;
 			margin: auto;
+			padding: 8mm;
 		}
 
 		/* ── CABECERA ── */
@@ -36,6 +37,7 @@
 			gap: 8px;
 			margin-bottom: 8px;
 			align-items: stretch;
+			min-height: 220px;
 		}
 
 		.left-header {
@@ -46,21 +48,28 @@
 		}
 
 		.logo-wrapper {
-			max-width: 200px;
-			min-height: 120px;
+			max-width: 240px;
 			border: none;
 			border-radius: 3px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 6px;
+			align-self: center;
 		}
 
 		.logo {
-			width: 100%;
-			height: 100%;
+			max-width: 100%;
+			max-height: 100%;
+			width: auto;
+			height: auto;
 			object-fit: contain;
+			display: block;
 		}
 
 		.box {
 			border: 1px solid var(--border-color);
-			border-radius: 3px;
+			border-radius: 4px;
 			padding: 7px;
 		}
 
@@ -89,10 +98,11 @@
 		}
 
 		.tipo-doc {
-			font-size: 15px;
+			font-size: 16px;
 			font-weight: bold;
 			text-align: center;
-			margin: 5px 0;
+			margin: 6px 0;
+			letter-spacing: 4px;
 		}
 
 		.bold {
@@ -107,11 +117,11 @@
 
 		.barcode {
 			font-family: 'Libre Barcode 128', sans-serif;
-			font-size: 40px;
+			font-size: 48px;
 			line-height: 1;
 			display: block;
 			text-align: center;
-			margin: 3px 0;
+			margin: 4px 0;
 			overflow: hidden;
 		}
 
@@ -148,9 +158,9 @@
 		.table-details th,
 		.table-details td {
 			border: 1px solid var(--border-color);
-			padding: 4px 5px;
+			padding: 6px 6px;
 			text-align: left;
-			font-size: 9px;
+			font-size: 10px;
 		}
 
 		.table-details th {
@@ -183,11 +193,12 @@
 			width: 100%;
 			border-collapse: collapse;
 			font-size: 9px;
+			border: none;
 		}
 
 		.table-info-adicional th,
 		.table-info-adicional td {
-			border: 1px solid var(--border-color);
+			border: none;
 			padding: 3px 5px;
 		}
 
@@ -197,6 +208,7 @@
 			font-weight: bold;
 			background-color: #f0f0f0;
 			padding: 5px;
+			border-bottom: 1px solid var(--border-color);
 		}
 
 		.table-info-adicional td:first-child {
@@ -271,28 +283,35 @@
 						src="https://www.privilegioseguros.com.ec/wp-content/uploads/2025/12/logo-privilegio-cia-de-seguros-2.png"
 						alt="Logo">
 				</div>
-				<div class="box emisor-info">
-					<div class="razon-social">{{razonSocial}}</div>
-					<p><span class="bold">Matriz:</span> {{dirMatriz}}</p>
-					<p><span class="bold">Sucursal:</span> {{dirEstablecimiento}}</p>
+				<div class="box emisor-info" style="border-radius: 16px; padding: 8px;">
+					<div class="razon-social" style="margin-top: 8px; margin-bottom: 8px;">{{razonSocial}}</div>
+					<p style="margin-top: 12px; margin-bottom: 12px;"><span class="bold">Matriz:</span> {{dirMatriz}}
+					</p>
+					<p style="margin-top: 12px; margin-bottom: 12px;"><span class="bold">Sucursal:</span>
+						{{dirEstablecimiento}}</p>
 					{{#if contribuyenteEspecial}}
-					<p><span class="bold">Contribuyente Especial Nro.:</span> {{contribuyenteEspecial}}</p>
+					<p style="margin-top: 12px; margin-bottom: 12px;"><span class="bold">Contribuyente Especial
+							Nro.:</span> {{contribuyenteEspecial}}</p>
 					{{/if}}
-					<p><span class="bold">OBLIGADO A LLEVAR CONTABILIDAD:</span> {{obligadoContabilidad}}</p>
+					<p style="margin-top: 12px; margin-bottom: 12px;"><span class="bold">OBLIGADO A LLEVAR
+							COpTABILIDAD:</span> {{obligadoContabilidad}}</p>
 				</div>
 			</div>
 
 			<!-- Derecha: datos de la factura -->
-			<div class="box factura-info">
-				<p class="bold">R.U.C: {{ruc}}</p>
+			<div class="box factura-info" style="border-radius: 16px;">
+				<p class=" bold" style="margin-top: 12px; margin-bottom: 12px;">R.U.C: {{ruc}}</p>
 				<div class="tipo-doc">{{tipoDoc}}</div>
-				<p><span class="bold">No.:</span> {{estab}}-{{ptoEmi}}-{{secuencial}}</p>
-				<p class="bold">NUMERO DE AUTORIZACION</p>
-				<p class="clave-acceso-text">{{numeroAutorizacion}}</p>
-				<p><span class="bold">FECHA Y HORA DE AUTORIZACION:</span> {{fechaAutorizacion}}</p>
-				<p><span class="bold">AMBIENTE:</span> {{ambiente}}</p>
-				<p><span class="bold">EMISION:</span> {{tipoEmision}}</p>
-				<p class="bold">CLAVE DE ACCESO</p>
+				<p style="margin-top: 12px; margin-bottom: 12px;"><span class="bold">No.:</span>
+					{{estab}}-{{ptoEmi}}-{{secuencial}}</p>
+				<p class="bold" style="margin-top: 12px; margin-bottom: 12px;">NUMERO DE AUTORIZACION</p>
+				<p class="clave-acceso-text" style="margin-top: 12px; margin-bottom: 12px; font-size: 10px;">
+					{{numeroAutorizacion}}</p>
+				<p style="margin-top: 12px; margin-bottom: 12px;"><span class="bold">FECHA Y HORA DE
+						AUTORIZACION:</span> {{fechaAutorizacion}}</p>
+				<p style="margin-top: 12px; margin-bottom: 12px;"><span class="bold">AMBIENTE:</span> {{ambiente}}</p>
+				<p style="margin-top: 12px; margin-bottom: 12px;"><span class="bold">EMISION:</span> {{tipoEmision}}</p>
+				<p class="bold" style="margin-top: 12px; margin-bottom: 12px;">CLAVE DE ACCESO</p>
 				{{#if barcodeBase64}}
 				<div style="text-align:center; margin: 3px 0;">
 					<img src="data:image/png;base64,{{barcodeBase64}}"
@@ -307,13 +326,20 @@
 		<!-- ── DATOS COMPRADOR ── -->
 		<div class="box comprador-box">
 			<div class="comprador-left">
-				<p><span class="bold">Razón Social/ Nombres y Apellidos:</span> {{razonSocialComprador}}</p>
-				<p><span class="bold">Fecha Emisión:</span> {{fechaEmision}}</p>
-				<p><span class="bold">Dirección:</span> {{direccionComprador}}</p>
+				<p style="padding-bottom: 8px; font-size: 9px;"><span class="bold">Razón Social/ Nombres y
+						Apellidos:</span>
+					{{razonSocialComprador}}</p>
+				<p style="padding-bottom: 8px; font-size: 9px;"><span class="bold">Fecha Emisión:</span>
+					{{fechaEmision}}</p>
+				<p style="padding-bottom: 8px; font-size: 9px;"><span class="bold">Dirección:</span>
+					{{direccionComprador}}</p>
 			</div>
 			<div class="comprador-right">
-				<p><span class="bold">Identificación:</span> {{identificacionComprador}}</p>
-				<p><span class="bold">Guía de remisión:</span> {{guiaRemision}}</p>
+				<p style="padding-bottom: 8px; font-size: 9px;"><span class="bold">Identificación:</span>
+					{{identificacionComprador}}
+				</p>
+				<p style="padding-bottom: 8px; font-size: 9px;"><span class="bold">Guía de remisión:</span>
+					{{guiaRemision}}</p>
 			</div>
 		</div>
 
@@ -338,7 +364,7 @@
 		<div class="footer-section">
 
 			<div class="box info-adicional">
-				<table class="table-info-adicional">
+				<table class="table-info-adicional" style="border: none;">
 					<thead>
 						<tr class="title-row">
 							<th colspan="2">Información Adicional</th>
