@@ -31,7 +31,15 @@ export class SriService {
 	private readonly XML_FIRMADOS_DIR = process.env.XML_FIRMADOS_DIR || 'C:\\Users\\ASUS\\OneDrive\\Desktop\\xml_firmado';
 
 	// SSL agent para evitar errores de certificado en pruebas
-	private readonly sslAgent = new https.Agent({ rejectUnauthorized: false });
+	// Atención: desactivar la verificación de host/certificado es inseguro en producción.
+	// Esto se usa solo para entornos de prueba/VPN cuando el SRI responde por IP.
+	private readonly sslAgent = new https.Agent(({
+		rejectUnauthorized: false,
+		// Evita el error "Hostname/IP does not match certificate's altnames"
+		// al omitir la verificación del nombre del servidor.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		checkServerIdentity: (_: string, __: any) => undefined,
+	} as any));
 
 	constructor(
 		private readonly firmaService: FirmaService,
@@ -53,8 +61,8 @@ export class SriService {
 			const datosBusqueda = {
 				ruc: get('ruc'),
 				ambiente: get('ambiente'),
-				estab: get('estab'),
-				pto_emi: get('ptoEmi'),
+				estab: get('estab').padStart(3, '0'),
+				pto_emi: get('ptoEmi').padStart(3, '0'),
 				secuencial: get('secuencial').padStart(9, '0'),
 				cod_doc: get('codDoc').padStart(2, '0'),
 			};
@@ -221,23 +229,46 @@ export class SriService {
 	// Enviar al WS de recepción
 	private async enviarComprobante(xmlFirmado: string) {
 		const xmlBase64 = Buffer.from(xmlFirmado, 'utf-8').toString('base64');
-		try {
-			const client = await soap.createClientAsync(this.URL_RECEPCION, {
-				wsdl_options: { agent: this.sslAgent },
-			});
-			(client as any).httpClient.requestOptions = { agent: this.sslAgent };
 
-			const [result] = await client.validarComprobanteAsync({ xml: xmlBase64 });
+		const maxAttempts = 3;
+		const baseDelayMs = 3000;
 
-			const respuesta = result?.RespuestaRecepcionComprobante;
-			const estado = respuesta?.estado;
-			const mensajes = respuesta?.comprobantes?.comprobante?.mensajes?.mensaje;
-			const errores = mensajes ? (Array.isArray(mensajes) ? mensajes : [mensajes]) : [];
+		for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+			try {
+				const client = await soap.createClientAsync(this.URL_RECEPCION, {
+					wsdl_options: { agent: this.sslAgent },
+				});
+				(client as any).httpClient.requestOptions = { agent: this.sslAgent, timeout: 30000 };
 
-			return { estado, errores };
-		} catch (e: any) {
-			throw new InternalServerErrorException(`Error WS recepción SRI: ${e.message}`);
+				const [result] = await client.validarComprobanteAsync({ xml: xmlBase64 });
+
+				const respuesta = result?.RespuestaRecepcionComprobante;
+				const estado = respuesta?.estado;
+				const mensajes = respuesta?.comprobantes?.comprobante?.mensajes?.mensaje;
+				const errores = mensajes ? (Array.isArray(mensajes) ? mensajes : [mensajes]) : [];
+
+				// respuesta recibida
+
+				return { estado, errores };
+
+			} catch (e: any) {
+				// Registrar error de intento
+				this.logger.error(`Error WS recepción SRI (intento ${attempt}): ${e.message}`);
+
+				// Si aún quedan intentos, esperar un tiempo exponencial antes de reintentar
+				if (attempt < maxAttempts) {
+					const waitMs = baseDelayMs * attempt;
+					await new Promise((r) => setTimeout(r, waitMs));
+					continue;
+				}
+
+				// Último intento fallido — propagar como error controlado
+				throw new InternalServerErrorException(`Error WS recepción SRI: ${e.message}`);
+			}
 		}
+
+		// En caso improbable de que el bucle termine sin return/throw
+		throw new InternalServerErrorException('Error WS recepción SRI: intento de envío fallido desconocido');
 	}
 
 	private async esperarAutorizacion(

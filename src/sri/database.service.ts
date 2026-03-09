@@ -6,19 +6,25 @@ export class DatabaseService implements OnModuleInit {
 
 	private readonly logger = new Logger(DatabaseService.name);
 
-	private db: Database.Database;
+	private _db: Database.Database | null = null;
 	private readonly DB_PATH = process.env.DB_PATH || './sri_comprobantes.db';
 
 	onModuleInit() {
-		this.db = new Database(this.DB_PATH);
-		this.db.pragma('journal_mode = WAL'); // mejor rendimiento
-		this.crearTablas();
-
+		this.getDb(); // forzar inicialización al arrancar
 		this.logger.log(`Base de datos SQLite iniciada: ${this.DB_PATH}`);
 	}
 
+	private getDb(): Database.Database {
+		if (!this._db) {
+			this._db = new Database(this.DB_PATH);
+			this._db.pragma('journal_mode = WAL');
+			this.crearTablas();
+		}
+		return this._db;
+	}
+
 	private crearTablas() {
-		this.db.exec(`
+		this.getDb().exec(`
       CREATE TABLE IF NOT EXISTS comprobantes (
         id                  INTEGER PRIMARY KEY AUTOINCREMENT,
         ruc                 TEXT    NOT NULL,
@@ -63,7 +69,7 @@ export class DatabaseService implements OnModuleInit {
 
 		this.logger.log(`Insertando en SQLite: ${safeData.estab}-${safeData.pto_emi}-${safeData.secuencial}`);
 
-		const stmt = this.db.prepare(`
+		const stmt = this.getDb().prepare(`
         INSERT OR IGNORE INTO comprobantes
             (ruc, ambiente, estab, pto_emi, secuencial, cod_doc, clave_acceso)
         VALUES
@@ -87,7 +93,7 @@ export class DatabaseService implements OnModuleInit {
 
 		this.logger.log(`Actualizando autorizacion en SQLite: ${safeData.estado} - ${safeData.clave_acceso}`);
 
-		const stmt = this.db.prepare(`
+		const stmt = this.getDb().prepare(`
         UPDATE comprobantes SET
             numero_autorizacion = @numero_autorizacion,
             fecha_autorizacion  = @fecha_autorizacion,
@@ -110,7 +116,7 @@ export class DatabaseService implements OnModuleInit {
 		fecha_autorizacion: string;
 		estado: string;
 	} | null {
-		const stmt = this.db.prepare(`
+		const stmt = this.getDb().prepare(`
       SELECT clave_acceso, numero_autorizacion, fecha_autorizacion, estado
       FROM comprobantes
       WHERE ruc        = @ruc
@@ -138,7 +144,7 @@ export class DatabaseService implements OnModuleInit {
 		fecha_autorizacion: string;
 		estado: string;
 	} | null {
-		const stmt = this.db.prepare(`
+		const stmt = this.getDb().prepare(`
         SELECT clave_acceso, numero_autorizacion, fecha_autorizacion, estado
         FROM comprobantes
         WHERE ruc        = @ruc
@@ -154,7 +160,7 @@ export class DatabaseService implements OnModuleInit {
 	}
 
 	listarTodos(limite = 50): any[] {
-		return this.db.prepare(`
+		return this.getDb().prepare(`
       SELECT * FROM comprobantes ORDER BY fecha_creacion DESC LIMIT ?
     `).all(limite) as any[];
 	}
