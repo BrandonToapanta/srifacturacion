@@ -24,6 +24,8 @@ export class SftpService {
 	private readonly SFTP_FIRMADOS_DIR = process.env.SFTP_FIRMADOS_DIR || '/facturas/firmados';
 	// Por defecto usamos /xml/pdfs (anteriormente /facturas/pdf). Se puede sobrescribir con SFTP_PDF_DIR.
 	private readonly SFTP_PDF_DIR = process.env.SFTP_PDF_DIR || '/xml/pdfs';
+	// Carpeta remota para XML rechazados
+	private readonly SFTP_RECHAZADOS_DIR = process.env.SFTP_RECHAZADOS_DIR || '/xml/xml_rechazados';
 	private readonly LOCAL_TEMP_DIR = process.env.LOCAL_TEMP_DIR || 'C:\\temp\\sftp_temp';
 
 	// ── Conexión ──────────────────────────────────────────────────────────────
@@ -136,6 +138,22 @@ export class SftpService {
 
 			await sftp.rename(rutaOrigen, rutaDestino);
 			this.logger.log(`XML movido a procesados: ${nombreArchivo}`);
+		} finally {
+			await sftp.end();
+		}
+	}
+
+	// ── Mover XML rechazado a carpeta de rechazados remota ─────────────────
+	async moverXmlRechazado(nombreArchivo: string): Promise<void> {
+		const sftp = await this.conectar();
+		try {
+			await sftp.mkdir(this.SFTP_RECHAZADOS_DIR, true);
+
+			const rutaOrigen = `${this.SFTP_XML_DIR}/${nombreArchivo}`;
+			const rutaDestino = `${this.SFTP_RECHAZADOS_DIR}/${nombreArchivo}`;
+
+			await sftp.rename(rutaOrigen, rutaDestino);
+			this.logger.log(`XML movido a rechazados: ${nombreArchivo}`);
 		} finally {
 			await sftp.end();
 		}

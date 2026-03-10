@@ -66,6 +66,13 @@ export class SftpProcesadorService {
 			} catch (e: any) {
 				this.logger.error(`Error moviendo XML a procesados (VPN?): ${e.message}`);
 			}
+		} else {
+			// Si no fue autorizado en el primer intento, mover a carpeta de rechazados
+			try {
+				await this.sftpService.moverXmlRechazado(nombreArchivo);
+			} catch (e: any) {
+				this.logger.error(`Error moviendo XML a rechazados (VPN?): ${e.message}`);
+			}
 		}
 
 		return resultado;

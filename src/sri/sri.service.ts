@@ -102,7 +102,8 @@ export class SriService {
 					const recepcion = await this.enviarComprobante(xmlFirmado);
 					if (recepcion.estado === 'DEVUELTA') {
 
-						this.logger.warn(`Comprobante devuelto en reintento autorización: ${registroExistente.clave_acceso}`);
+						const razones = (recepcion.errores || []).map((r: any) => r?.mensaje || JSON.stringify(r)).join(' ; ');
+						this.logger.warn(`Comprobante devuelto en reintento autorización: ${registroExistente.clave_acceso} — razones: ${razones}`);
 
 						return { estado: 'DEVUELTA', xmlFirmado, errores: recepcion.errores };
 					}
@@ -157,7 +158,8 @@ export class SriService {
 			const recepcion = await this.enviarComprobante(xmlFirmado);
 			if (recepcion.estado === 'DEVUELTA') {
 
-				this.logger.warn(`Comprobante devuelto en recepción: ${claveAcceso}`);
+				const razones = (recepcion.errores || []).map((r: any) => r?.mensaje || JSON.stringify(r)).join(' ; ');
+				this.logger.warn(`Comprobante devuelto en recepción: ${claveAcceso} — razones: ${razones}`);
 
 				return { estado: 'DEVUELTA', xmlFirmado, errores: recepcion.errores };
 			}

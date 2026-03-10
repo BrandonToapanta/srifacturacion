@@ -94,7 +94,9 @@ export class SftpWatcherService implements OnModuleInit, OnModuleDestroy {
 				} else if (resultado.estado === 'DEVUELTA') {
 					// NO marcar — reintentará en el próximo ciclo
 					this.stats.totalErrores++;
-					this.logger.warn(`↺ DEVUELTA, reintentará: ${archivo}`);
+					// Mostrar razones si vienen del resultado
+					const razones = (resultado.errores || []).map((r: any) => r?.mensaje || JSON.stringify(r)).join(' ; ');
+					this.logger.warn(`↺ DEVUELTA, reintentará: ${archivo}${razones ? ' — razones: ' + razones : ''}`);
 
 				} else {
 					this.stats.totalErrores++;
