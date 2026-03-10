@@ -96,7 +96,7 @@ export class SftpWatcherService implements OnModuleInit, OnModuleDestroy {
 					this.stats.totalErrores++;
 					// Mostrar razones si vienen del resultado
 					const razones = (resultado.errores || []).map((r: any) => r?.mensaje || JSON.stringify(r)).join(' ; ');
-					this.logger.warn(`↺ DEVUELTA, reintentará: ${archivo}${razones ? ' — razones: ' + razones : ''}`);
+					this.logger.warn(`↺ DEVUELTA, ${razones ? ' — razones: ' + razones : ''}`);
 
 				} else {
 					this.stats.totalErrores++;

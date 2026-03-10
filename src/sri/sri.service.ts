@@ -105,6 +105,19 @@ export class SriService {
 						const razones = (recepcion.errores || []).map((r: any) => r?.mensaje || JSON.stringify(r)).join(' ; ');
 						this.logger.warn(`Comprobante devuelto en reintento autorización: ${registroExistente.clave_acceso} — razones: ${razones}`);
 
+						// Si la devolución indica que la clave ya está registrada, consultar directamente
+						const esClaveRegistrada = (recepcion.errores || []).some((r: any) => /CLAVE\s*(DE\s*)?ACCESO\s*REGISTRADA/i.test(r?.mensaje || ''));
+						if (esClaveRegistrada) {
+							this.logger.log(`Clave ya registrada según SRI, consultando autorización para: ${registroExistente.clave_acceso}`);
+							try {
+								const consulta = await this.consultarYGenerarPdf(registroExistente.clave_acceso);
+								return consulta;
+							} catch (e: any) {
+								this.logger.error(`Error al consultar autorización tras clave registrada: ${e.message}`);
+								return { estado: 'DEVUELTA', xmlFirmado, errores: recepcion.errores };
+							}
+						}
+
 						return { estado: 'DEVUELTA', xmlFirmado, errores: recepcion.errores };
 					}
 
@@ -160,6 +173,19 @@ export class SriService {
 
 				const razones = (recepcion.errores || []).map((r: any) => r?.mensaje || JSON.stringify(r)).join(' ; ');
 				this.logger.warn(`Comprobante devuelto en recepción: ${claveAcceso} — razones: ${razones}`);
+
+				// Si indica clave registrada, intentar recuperar la autorización en el SRI
+				const esClaveRegistrada = (recepcion.errores || []).some((r: any) => /CLAVE\s*(DE\s*)?ACCESO\s*REGISTRADA/i.test(r?.mensaje || ''));
+				if (esClaveRegistrada) {
+					this.logger.log(`Clave registrada detectada, consultando autorización para: ${claveAcceso}`);
+					try {
+						const consulta = await this.consultarYGenerarPdf(claveAcceso);
+						return consulta;
+					} catch (e: any) {
+						this.logger.error(`Error al consultar autorización tras clave registrada: ${e.message}`);
+						return { estado: 'DEVUELTA', xmlFirmado, errores: recepcion.errores };
+					}
+				}
 
 				return { estado: 'DEVUELTA', xmlFirmado, errores: recepcion.errores };
 			}
